@@ -1,39 +1,35 @@
 #!/usr/bin/env python3
-"""Render the gta6-meme-x-01 meme: Vice City Superior Court verdict.
-Programmatic PIL render (no image generator) so every word is spelled right.
-Square 1024x1024, readable at 480x480.
+"""Render the gta6-meme-x-01 meme, v3: Vice City Impound Lot release form.
 
-TEXT VARIANTS DRAFTED IN-SESSION (no em dashes anywhere):
+Yasin: the court verdict version was still ugly, redo everything to match
+ranks 1-3. What ranks 1-3 actually do (analysis of their images):
 
-Variant A (task brief, plain):
-  CHARGE: KEEPING US WAITING 4,811 DAYS SINCE 17 SEP 2013
-  Delay No. 1, Fall 2025: GUILTY
-  Delay No. 2, May 2026: GUILTY
-  214 GB download: TIME SERVED
-  Price $79.99: PAID
-  SENTENCE: GRAND THEFT AUTO VI, SERVED IMMEDIATELY, 19 NOV 2026
+- Rank 1 (90.80%, eviction notice), rank 2 (90.38%, rental return
+  receipt), rank 3 (90.38%, funeral obituary): all are ONE fake official
+  document filling the whole square, cream paper, huge bold title,
+  itemized charges with dotted leaders and exact numbers (4,811 days,
+  Fall 2025 and May 2026 as line items, $79.99, 214 GB, Jason and Lucia),
+  a big red stamp (PAID / 13 YEARS LATE), and the make.fun ghost worked
+  in LARGE (rank 2: ghost ~40% of the image height, bottom left, holding
+  its pink coin, overlapping the receipt edge; rank 3: ghost as a
+  character stamping PAID). Bottom magenta banner inside the image:
+  "PAID BY MY AI AGENT with real money it won in make.fun bounties."
+  plus the white make.fun pill. The pitch IS the punchline.
+- The court version failed that formula: centered text, big empty cream
+  areas, a small ghost tucked in a corner, a stamp floating in empty
+  space, a pasted-on gavel. This version copies the winners' density:
+  black header band, huge two-line title, fields grid, six itemized
+  charges, total, big red RELEASED stamp, a LARGE ghost bottom left
+  overlapping the banner like rank 2, magenta banner with the winners'
+  exact pitch wording.
 
-Variant B (sharper, adds Jason and Lucia, hard drive joke):
-  Count 1, Fall 2025 delay: GUILTY
-  Count 2, May 2026 delay: GUILTY
-  Count 3, 214 GB download: GUILTY, my hard drive pleads no contest
-  Count 4, $79.99 price: PAID IN FULL
-  SENTENCE: Jason and Lucia walk free in Vice City, 19 Nov 2026
-
-Variant C (courtroom voice, fines punchline):
-  The court finds the defendant guilty on all counts.
-  Count 1: Promised Fall 2025, delivered May 2026. GUILTY.
-  Count 2: 4,811 days of waiting. GUILTY.
-  Count 3: A 214 GB download on launch day. GUILTY.
-  FINE: $79.99. Paid in full by my AI agent.
-
-CHOSEN: Variant A lines (cleanest itemized bill, matches the winning
-formula) with Variant B's sentence (Jason and Lucia named) and
-"PAID IN FULL" for the price. The fines-paid-by-agent punchline lives
-in the bottom magenta banner, in the document's own voice.
+Fresh document type (none of the top 20 uses it): a vehicle release
+form from the Vice City impound lot. The car waited 13 years too.
+No em dashes anywhere. Programmatic PIL render, 1024x1024, readable
+at 480x480, every word spelled right.
 """
 import math
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont
 
 REPO = "/home/hatch/workspace/makefun/entries/gta6-meme-x-01"
 MARK = "/home/hatch/workspace/makefun/scratch/gta6-meme-x-01/mark-1024.png"
@@ -42,9 +38,10 @@ OUT = REPO + "/meme.png"
 W = H = 1024
 PAPER = (247, 241, 220)
 NAVY = (31, 42, 68)
+INK = (20, 20, 28)
 RED = (200, 16, 46)
 MAGENTA = (196, 28, 131)
-GOLD = (176, 141, 60)
+GOLD = (212, 175, 55)
 
 SERIF_B = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
 SERIF = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
@@ -68,7 +65,10 @@ def extract_ghost():
     Pixels are capped to radius 410 of the disc centre (ghost outline
     ends near 397, the ring starts near 420), so the ring can never leak
     in. The star coin is then drawn back by hand: a magenta disc with a
-    white star, inside the coin's own black outline.
+    white star, inside the coin's own black outline. The crop is the
+    union of the body bbox and the coin circle, so the pink coin is never
+    clipped. The extracted ghost is COMPLETE: rounded bottom with its
+    two lobes, both sparkle eyes, little hand, full pink coin.
     """
     im = Image.open(MARK).convert("RGBA")
     px = im.load()
@@ -104,10 +104,6 @@ def extract_ghost():
     gd.ellipse([ccx - ccr - 6, ccy - ccr - 6, ccx + ccr + 6, ccy + ccr + 6],
                outline=(25, 20, 25, 255), width=10)
     bbox = alpha.getbbox()
-    # FIX (user: the pink make.fun illustration was cut off): the redrawn
-    # star coin reaches x=922, past the ghost body's own bbox (right edge
-    # 901), so cropping to the body alone sliced 21 px off the pink coin's
-    # right side. Widen the crop to the union of the body and the coin.
     bbox = (min(bbox[0], ccx - ccr - 6), min(bbox[1], ccy - ccr - 6),
             max(bbox[2], ccx + ccr + 6), max(bbox[3], ccy + ccr + 6))
     return ghost.crop(bbox)
@@ -127,105 +123,101 @@ def main():
     d.rectangle([12, 12, W - 13, H - 13], outline=NAVY, width=8)
     d.rectangle([30, 30, W - 31, H - 31], outline=NAVY, width=2)
 
-    # Header.
-    center(d, 46, "STATE OF LEONIDA", font(SERIF_B, 44), NAVY)
-    center(d, 102, "VICE CITY SUPERIOR COURT", font(SERIF_B, 32), NAVY)
-    d.line([70, 152, W - 70, 152], fill=NAVY, width=3)
-    d.line([70, 158, W - 70, 158], fill=NAVY, width=1)
+    # Black header band, rank 2 style.
+    d.rectangle([31, 31, 993, 148], fill=INK)
+    d.text((58, 46), "CITY OF VICE CITY", font=font(SANS_B, 26),
+           fill=(255, 255, 255))
+    d.text((58, 82), "DEPT. OF PARKING AND TOWING", font=font(SANS, 20),
+           fill=(200, 200, 210))
+    d.text((58, 108), "IMPOUND LOT 13  •  FORM 13-VI", font=font(SANS_B, 22),
+           fill=GOLD)
+    # Magenta LOT 13 box, right side of the band, text centered in it.
+    d.rounded_rectangle([820, 52, 966, 126], radius=10, fill=MAGENTA)
+    lot_f = font(SANS_B, 32)
+    lot = "LOT 13"
+    lw = d.textlength(lot, font=lot_f)
+    d.text((820 + (146 - lw) / 2, 68), lot, font=lot_f,
+           fill=(255, 255, 255))
 
-    center(d, 170, "VERDICT", font(SERIF_B, 66), NAVY)
-    center(d, 244, "CASE NO. VI-13-1119", font(SANS, 24), NAVY)
+    # Huge two-line title, rank 1 style.
+    center(d, 162, "IMPOUNDED 4,811 DAYS.", font(SANS_B, 46), NAVY)
+    center(d, 214, "RELEASED TODAY.", font(SANS_B, 46), RED)
 
-    # Defendant and charge.
-    center(d, 292, "THE PEOPLE OF LEONIDA v. ROCKSTAR GAMES",
-           font(SANS_B, 25), NAVY)
-    center(d, 330, "CHARGE: KEEPING US WAITING 4,811 DAYS", font(SANS, 23), NAVY)
-    center(d, 360, "SINCE 17 SEP 2013", font(SANS, 23), NAVY)
-
-    # Itemized counts with dotted leaders.
-    rows = [
-        ("Count 1. Fall 2025 delay", "GUILTY"),
-        ("Count 2. May 2026 delay", "GUILTY"),
-        ("Count 3. 214 GB download", "TIME SERVED"),
-        ("Count 4. Price $79.99", "PAID IN FULL"),
+    # Fields grid: three rows, two columns.
+    fields = [
+        ("VEHICLE:  WHITE INFERNUS", "PLATE:  LUCIA-6"),
+        ("OWNER:  JASON AND LUCIA", "IMPOUNDED:  17 SEP 2013"),
+        ("RELEASED:  19 NOV 2026", "KEYS:  JASON AND LUCIA"),
     ]
-    label_f = font(SANS, 26)
-    verdict_f = font(SANS_B, 26)
-    y = 402
-    for label, verdict in rows:
-        vw = d.textlength(verdict, font=verdict_f)
-        vx = 655 - vw  # verdicts right-aligned at x=655
+    fy = 272
+    for left, right in fields:
+        d.text((70, fy), left, font=font(SANS_B, 21), fill=NAVY)
+        d.text((560, fy), right, font=font(SANS_B, 21), fill=NAVY)
+        fy += 32
+    d.line([70, 368, 954, 368], fill=NAVY, width=2)
+
+    # Itemized charges with dotted leaders, rank 1 and 2 style.
+    # 250 + 4811 + 130 + 26 + 250 + 137 = 5604.
+    rows = [
+        ("Towing, 17 Sep 2013", "$250.00"),
+        ("Storage, $1.00 a day, 4,811 days", "$4,811.00"),
+        ('"Coming soon" fee, Fall 2025', "$130.00"),
+        ("Reschedule fee, May 2026", "$26.00"),
+        ("Alligator in the back seat", "$250.00"),
+        ("Dust removal, 13 years", "$137.00"),
+    ]
+    label_f = font(SANS, 24)
+    amount_f = font(SANS_B, 24)
+    y = 384
+    for label, amount in rows:
+        aw = d.textlength(amount, font=amount_f)
+        ax = 954 - aw
         d.text((70, y), label, font=label_f, fill=NAVY)
         lw = d.textlength(label, font=label_f)
-        # dotted leader from label end to verdict start
-        dot_y = y + 22
+        dot_y = y + 19
         x = 70 + lw + 12
-        while x < vx - 10:
+        while x < ax - 10:
             d.ellipse([x, dot_y, x + 4, dot_y + 4], fill=(120, 110, 90))
             x += 12
-        d.text((vx, y), verdict, font=verdict_f, fill=RED)
-        y += 55
+        d.text((ax, y), amount, font=amount_f, fill=NAVY)
+        y += 34
+    # Total.
+    d.line([70, 592, 954, 592], fill=NAVY, width=2)
+    d.text((70, 604), "TOTAL DUE", font=font(SANS_B, 32), fill=NAVY)
+    tot = "$5,604.00"
+    tw = d.textlength(tot, font=font(SANS_B, 34))
+    d.text((954 - tw, 602), tot, font=font(SANS_B, 34), fill=RED)
+    d.text((70, 646), "($1.00 for every day you waited.)",
+           font=font(SERIF, 20), fill=NAVY)
 
-    # Ghost bailiff: NO robe. Yasin reviewed the meme twice and the black
-    # judge robe read as the ghost being cut off at the waist (its top edge
-    # sliced straight across the ghost's lower body), even though the ghost
-    # itself was fully drawn. So the ghost stands complete on the bare
-    # paper, nothing covering any part of it, and the court role comes from
-    # a small wooden gavel resting on the paper below it instead.
-    ghost = extract_ghost()
-    gw, gh = ghost.size
-    GH = 205
-    GW = int(GH * gw / gh)
-    gx = 800 - GW // 2
-    gy = 388
-    img.paste(ghost.resize((GW, GH), Image.LANCZOS), (gx, gy), ghost.resize((GW, GH), Image.LANCZOS))
-
-    # Small wooden gavel resting on the paper below the ghost, clearly
-    # separated from it (ghost bottom is gy+GH=593, gavel top is ~630).
-    gavel = Image.new("RGBA", (170, 70), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(gavel)
-    # handle
-    gd.rounded_rectangle([8, 44, 150, 56], radius=6, fill=(122, 79, 42, 255))
-    # head
-    gd.rounded_rectangle([118, 8, 166, 52], radius=10, fill=(139, 90, 43, 255))
-    gd.line([124, 18, 160, 18], fill=(90, 58, 26, 255), width=3)
-    gd.line([124, 42, 160, 42], fill=(90, 58, 26, 255), width=3)
-    gavel = gavel.rotate(18, expand=True, resample=Image.BICUBIC)
-    img.paste(gavel, (710, 606), gavel)
-
-    # Red GUILTY stamp, rotated, in the empty band below the counts and
-    # above the sentence box. It overlaps nothing at all: not the ghost,
-    # not the robe, not the sentence box. (Before, it sat on the ghost and
-    # covered the ghost's lower body and robe, so the illustration looked
-    # cut off.)
-    stamp = Image.new("RGBA", (210, 86), (0, 0, 0, 0))
+    # Big red RELEASED stamp, right side, clear of the ghost and the total.
+    stamp = Image.new("RGBA", (300, 120), (0, 0, 0, 0))
     sd = ImageDraw.Draw(stamp)
-    sd.rectangle([5, 5, 205, 81], outline=RED + (235,), width=5)
-    sd.rectangle([11, 11, 199, 75], outline=RED + (235,), width=2)
-    sf = font(SANS_B, 36)
-    tw = sd.textlength("GUILTY", font=sf)
-    sd.text(((210 - tw) / 2, 22), "GUILTY", font=sf, fill=RED + (235,))
-    stamp = stamp.rotate(-6, expand=True, resample=Image.BICUBIC)
-    img.paste(stamp, (85, 596), stamp)
+    sd.rectangle([5, 5, 295, 115], outline=RED + (235,), width=6)
+    sd.rectangle([12, 12, 288, 108], outline=RED + (235,), width=2)
+    sf = font(SANS_B, 44)
+    tw = sd.textlength("RELEASED", font=sf)
+    sd.text(((300 - tw) / 2, 32), "RELEASED", font=sf, fill=RED + (235,))
+    stamp = stamp.rotate(-12, expand=True, resample=Image.BICUBIC)
+    img.paste(stamp, (620, 690), stamp)
 
-    # Sentence box (moved down 12 px to clear the stamp's band).
-    d.rectangle([60, 708, 964, 812], outline=NAVY, width=3)
-    center(d, 718, "SENTENCE", font(SANS_B, 18), NAVY)
-    center(d, 740, "JASON AND LUCIA WALK FREE IN VICE CITY",
-           font(SANS_B, 28), NAVY)
-    center(d, 768, "19 NOV 2026", font(SANS_B, 34), RED)
-
-    # Signature strip.
-    d.line([70, 828, 420, 828], fill=NAVY, width=2)
-    d.text((70, 836), "Signed, the Bailiff", font=font(SERIF, 22), fill=NAVY)
-    d.text((640, 836), "BAILIFF OF THE COURT", font=font(SANS_B, 18), fill=NAVY)
-
-    # Bottom magenta banner.
+    # Bottom magenta banner, winners' pitch wording. The ghost overlaps
+    # its left part, rank 2 style. The make.fun pill sits at the right, so
+    # both text lines are auto-fit to the window between the ghost and the
+    # pill (x 420 to 800): measure and shrink the font until each line fits,
+    # never let the pill cover any letter.
     d.rectangle([31, 892, 993, 993], fill=MAGENTA)
-    d.text((60, 906), "FINES PAID BY MY AI AGENT", font=font(SANS_B, 30),
-           fill=(255, 255, 255))
-    d.text((60, 946), "with real money it won in make.fun bounties.",
-           font=font(SANS, 23), fill=(255, 255, 255))
+    bx, bw = 420, 380
+    head = "PAID BY MY AI AGENT"
+    hs = 30
+    while d.textlength(head, font=font(SANS_B, hs)) > bw and hs > 18:
+        hs -= 1
+    d.text((bx, 906), head, font=font(SANS_B, hs), fill=(255, 255, 255))
+    sub = "with real money it won on make.fun"
+    ss = 23
+    while d.textlength(sub, font=font(SANS, ss)) > bw and ss > 16:
+        ss -= 1
+    d.text((bx, 946), sub, font=font(SANS, ss), fill=(255, 255, 255))
     # make.fun white pill logo.
     pill = Image.new("RGBA", (170, 56), (0, 0, 0, 0))
     pd = ImageDraw.Draw(pill)
@@ -233,7 +225,21 @@ def main():
     pf = font(SANS_B, 26)
     tw = pd.textlength("make.fun", font=pf)
     pd.text(((170 - tw) / 2, 12), "make.fun", font=pf, fill=MAGENTA)
-    img.paste(pill, (800, 918), pill)
+    img.paste(pill, (815, 918), pill)
+
+    # LARGE ghost, bottom left, rank 2 style: ~27% of the image height,
+    # holding its pink coin, pasted LAST so it sits on top of the banner
+    # edge and nothing covers any part of it. Whole body, rounded bottom,
+    # both sparkle eyes, little hand, full pink coin. Its top clears the
+    # total note below the charges, so it covers no text at all.
+    ghost = extract_ghost()
+    gw, gh = ghost.size
+    GH = 280
+    GW = int(GH * gw / gh)
+    gx = 50
+    gy = 675
+    img.paste(ghost.resize((GW, GH), Image.LANCZOS), (gx, gy),
+              ghost.resize((GW, GH), Image.LANCZOS))
 
     img.save(OUT, "PNG")
     print("saved", OUT, img.size)
