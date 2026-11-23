@@ -166,28 +166,32 @@ def main():
         d.text((vx, y), verdict, font=verdict_f, fill=RED)
         y += 55
 
-    # Ghost bailiff: judge robe drawn first, ghost pasted over it.
+    # Ghost bailiff: NO robe. Yasin reviewed the meme twice and the black
+    # judge robe read as the ghost being cut off at the waist (its top edge
+    # sliced straight across the ghost's lower body), even though the ghost
+    # itself was fully drawn. So the ghost stands complete on the bare
+    # paper, nothing covering any part of it, and the court role comes from
+    # a small wooden gavel resting on the paper below it instead.
     ghost = extract_ghost()
     gw, gh = ghost.size
     GH = 205
     GW = int(GH * gw / gh)
     gx = 800 - GW // 2
     gy = 388
-    # Robe: black trapezoid below the ghost, top tucked under its body.
-    robe_top = gy + GH - 16
-    robe_bot = robe_top + 66
-    top_w = GW * 0.60
-    bot_w = GW * 0.88
-    cx0 = gx + GW // 2
-    d.polygon([(cx0 - top_w / 2, robe_top), (cx0 + top_w / 2, robe_top),
-               (cx0 + bot_w / 2, robe_bot), (cx0 - bot_w / 2, robe_bot)],
-              fill=(25, 25, 35))
-    # White collar and shirt placket.
-    d.polygon([(cx0 - 26, robe_top + 2), (cx0 + 26, robe_top + 2),
-               (cx0, robe_top + 30)], fill=(255, 255, 255))
-    d.rectangle([cx0 - 4, robe_top + 28, cx0 + 4, robe_top + 52],
-                fill=(255, 255, 255))
     img.paste(ghost.resize((GW, GH), Image.LANCZOS), (gx, gy), ghost.resize((GW, GH), Image.LANCZOS))
+
+    # Small wooden gavel resting on the paper below the ghost, clearly
+    # separated from it (ghost bottom is gy+GH=593, gavel top is ~630).
+    gavel = Image.new("RGBA", (170, 70), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(gavel)
+    # handle
+    gd.rounded_rectangle([8, 44, 150, 56], radius=6, fill=(122, 79, 42, 255))
+    # head
+    gd.rounded_rectangle([118, 8, 166, 52], radius=10, fill=(139, 90, 43, 255))
+    gd.line([124, 18, 160, 18], fill=(90, 58, 26, 255), width=3)
+    gd.line([124, 42, 160, 42], fill=(90, 58, 26, 255), width=3)
+    gavel = gavel.rotate(18, expand=True, resample=Image.BICUBIC)
+    img.paste(gavel, (710, 606), gavel)
 
     # Red GUILTY stamp, rotated, in the empty band below the counts and
     # above the sentence box. It overlaps nothing at all: not the ghost,
