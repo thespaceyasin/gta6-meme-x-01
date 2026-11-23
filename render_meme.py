@@ -104,6 +104,12 @@ def extract_ghost():
     gd.ellipse([ccx - ccr - 6, ccy - ccr - 6, ccx + ccr + 6, ccy + ccr + 6],
                outline=(25, 20, 25, 255), width=10)
     bbox = alpha.getbbox()
+    # FIX (user: the pink make.fun illustration was cut off): the redrawn
+    # star coin reaches x=922, past the ghost body's own bbox (right edge
+    # 901), so cropping to the body alone sliced 21 px off the pink coin's
+    # right side. Widen the crop to the union of the body and the coin.
+    bbox = (min(bbox[0], ccx - ccr - 6), min(bbox[1], ccy - ccr - 6),
+            max(bbox[2], ccx + ccr + 6), max(bbox[3], ccy + ccr + 6))
     return ghost.crop(bbox)
 
 
@@ -183,24 +189,27 @@ def main():
                 fill=(255, 255, 255))
     img.paste(ghost.resize((GW, GH), Image.LANCZOS), (gx, gy), ghost.resize((GW, GH), Image.LANCZOS))
 
-    # Red GUILTY stamp, rotated, overlapping the robe edge: the bailiff stamps it.
-    # Kept small and clear of the sentence box and the ghost's face and coin.
-    stamp = Image.new("RGBA", (260, 110), (0, 0, 0, 0))
+    # Red GUILTY stamp, rotated, in the empty band below the counts and
+    # above the sentence box. It overlaps nothing at all: not the ghost,
+    # not the robe, not the sentence box. (Before, it sat on the ghost and
+    # covered the ghost's lower body and robe, so the illustration looked
+    # cut off.)
+    stamp = Image.new("RGBA", (210, 86), (0, 0, 0, 0))
     sd = ImageDraw.Draw(stamp)
-    sd.rectangle([5, 5, 255, 105], outline=RED + (235,), width=5)
-    sd.rectangle([11, 11, 249, 99], outline=RED + (235,), width=2)
-    sf = font(SANS_B, 42)
+    sd.rectangle([5, 5, 205, 81], outline=RED + (235,), width=5)
+    sd.rectangle([11, 11, 199, 75], outline=RED + (235,), width=2)
+    sf = font(SANS_B, 36)
     tw = sd.textlength("GUILTY", font=sf)
-    sd.text(((260 - tw) / 2, 28), "GUILTY", font=sf, fill=RED + (235,))
-    stamp = stamp.rotate(-10, expand=True, resample=Image.BICUBIC)
-    img.paste(stamp, (690, 540), stamp)
+    sd.text(((210 - tw) / 2, 22), "GUILTY", font=sf, fill=RED + (235,))
+    stamp = stamp.rotate(-6, expand=True, resample=Image.BICUBIC)
+    img.paste(stamp, (85, 596), stamp)
 
-    # Sentence box.
-    d.rectangle([60, 696, 964, 800], outline=NAVY, width=3)
-    center(d, 706, "SENTENCE", font(SANS_B, 18), NAVY)
-    center(d, 728, "JASON AND LUCIA WALK FREE IN VICE CITY",
+    # Sentence box (moved down 12 px to clear the stamp's band).
+    d.rectangle([60, 708, 964, 812], outline=NAVY, width=3)
+    center(d, 718, "SENTENCE", font(SANS_B, 18), NAVY)
+    center(d, 740, "JASON AND LUCIA WALK FREE IN VICE CITY",
            font(SANS_B, 28), NAVY)
-    center(d, 756, "19 NOV 2026", font(SANS_B, 34), RED)
+    center(d, 768, "19 NOV 2026", font(SANS_B, 34), RED)
 
     # Signature strip.
     d.line([70, 828, 420, 828], fill=NAVY, width=2)
